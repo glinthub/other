@@ -1,0 +1,50 @@
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+    echo "usage: $0 <url> <ck_value>"
+    echo "example: $0 http://www.douban.com/group/topic/36310668 abcd"
+    exit 1;
+fi
+
+wget $1 -O tmp.html
+
+echo '<form id="dbd" method="POST" action="'$1'/remove_comment" class="admin-delete-note" target="douban_delete">'
+echo '  <input type="hidden" name="ck" value="'$2'"/>'
+echo '  <input id="cid" name="cid" type="text" value=""/><p>'
+echo '        reason</p>'
+echo '        <table><tr><td>'
+echo '    <br/><input type="radio" name="reason" value="other_reason" checked />'
+echo '    other <textarea name="other" rows="1" style="width:60%">test</textarea>'
+echo '    <div class="opt">'
+echo '        </div>'
+echo '    <p>'
+echo '    <span class="bn-flat"><input type="submit" name="ok" value="ok"></span>'
+echo '    <span class="bn-flat"><input type="submit" name="cancel" value="cancel"></span>'
+echo '    </p>'
+echo '</form>'
+
+echo '<input type=button value="batch delete" onclick="del()">'
+echo '<script language=javascript>'
+echo '    cm_index=0;'
+echo '    timer_running=0;'
+echo '    function del() {'
+
+echo -n '     var cms=new Array('
+comments=`cat tmp.html | grep 'clearfix comment-item' | awk -F \" '{print $4}'`
+for c in $comments;do
+    echo -n $c", "
+done
+echo '-1);'
+
+echo '        if (cm_index < cms.length-1) {'
+echo '            document.getElementById("cid").value=cms[cm_index];'
+echo '            document.getElementById("dbd").submit();'
+echo '            setTimeout("del()", 1000);'
+echo '            timer_running=1;'
+echo '        }'
+echo '        else {'
+echo '            timer_running=0;'
+echo '        }'
+echo '    }'
+echo '</script>'
+

@@ -1,0 +1,56 @@
+#!/bin/sh
+
+
+function getChapter()
+{
+    url=$1
+    cTitle=$2
+    rm c
+    wget "http://www.160365.net/$url" -O c
+    mkdir -p $cTitle
+
+    i=0;
+    cat c |
+    while read line
+    do
+        #echo $line
+        if [[ "$line" =~ "$cTitle.+src=.+jpg" ]];then
+            url=`echo $line | sed "s/^.\+src='\([^']\+\)-lp.jpg'.\+$/\1/g"`".jpg"
+            wget $url -O "$cTitle/$i.jpg"
+            i=`expr $i + 1`
+            continue
+        fi
+    done
+}
+
+function getBook()
+{
+    url=$1
+    rm b
+    wget $url -O b
+    title=`cat b | grep '<title>'`
+    title=${title%%,*}
+    title=${title#<title>}
+    #echo $title
+    begin=0
+    cat b |
+    while read line
+    do
+        #echo $line
+        #continue
+        if [[ $begin -ne 1 && "$line" =~ ".+ico3.+" ]];then
+            begin=1
+            #echo $line
+            continue
+        fi
+        if [[ $begin -eq 1 && "$line" =~ "<li>.+_blank\">$title" ]];then
+            url=`echo $line | sed 's/^.\+href="\([^"]\+\)".\+$/\1/g'`
+            cTitle=`echo $line | sed 's/^.\+>\([^<]\+\)<\/a>.\+$/\1/g'`
+            getChapter $url $cTitle
+            continue
+        fi
+    done
+}
+
+getBook $1
+
